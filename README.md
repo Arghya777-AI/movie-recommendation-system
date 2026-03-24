@@ -1,6 +1,10 @@
 
+# CineAI — Movie Recommendation System
+**A project by Megha Saha**
 
-Project Motivation
+---
+
+## Project Motivation
 
 The Movie Database provides movie data for public use. Given that major films costing over $100 million to produce can still flop, Analyse this data is more important than ever to the industry. Can we tell the direction of films and changes budget over time? Which languages are most popular ? Can we classify the data to we can predict in the future? This is a great place to start digging in to those questions, with data on the plot, cast, crew, budget, and revenues of several thousand films. Data
 
@@ -73,3 +77,7 @@ A summary of the results:
 Through clustering , we have noticed that, revenue, profit, vote count, budget, popularity, Adventure genre , Action genre have a positive correlation, that mean this attribute tend to increase together. We can say that Adventure and Action genre tend to Increase revenue, profit, vote count, budget, popularity.
 
 runtime, Drama, History, vote average, War genre, France country , United Kingdom country , Italy country , Sweden country , Denmark country and Germany country have a positive correlation, that mean this attribute tend to increase together. And they have a negative correlation with Comedy genre, United States of America country , Family genre and Animation genre. We can say that Europe countries tend to watch Drama, History, and War films. While America tends to watch Comedy, Family and Animation films. This system matches persons with similar interests and provides recommendations based on this matching. Collaborative filters do not require item metadata like its content-based counterparts.
+
+---
+
+*Project by Megha Saha*
