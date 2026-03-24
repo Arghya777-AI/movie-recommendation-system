@@ -7,8 +7,6 @@ Live suggestions + instant cards with zero server round-trips.
 import os, json
 import streamlit as st
 import streamlit.components.v1 as components
-import pandas as pd
-import numpy as np
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -31,74 +29,17 @@ iframe { border: none !important; }
 """, unsafe_allow_html=True)
 
 
-# ── Load recommender ───────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner=False)
-def load_engine():
-    from recommender import MovieRecommender
+# ── Load pre-computed data (instant — no ML at runtime) ───────────────────────
+@st.cache_data
+def load_precomputed():
     base = os.path.dirname(os.path.abspath(__file__))
-    return MovieRecommender(os.path.join(base, 'tmdb_5000_movies.csv'))
+    path = os.path.join(base, 'precomputed.json')
+    with open(path, encoding='utf-8') as f:
+        data = json.load(f)
+    return data['movies'], data['recs'], data['top']
 
 with st.spinner("🎬 Loading CineAI…"):
-    rec = load_engine()
-
-
-def _fmt(v):
-    try:
-        v = float(v)
-        if v <= 0 or np.isnan(v): return None
-        if v >= 1e9: return f'${v/1e9:.1f}B'
-        if v >= 1e6: return f'${v/1e6:.0f}M'
-    except Exception:
-        pass
-    return None
-
-
-@st.cache_data
-def build_client_data(_rec):
-    """Pre-compute everything needed for the client-side JS app."""
-    df  = _rec.df
-    sim = _rec.cosine_sim_hybrid
-    titles_arr = df['title'].tolist()
-
-    # ── Movie metadata ─────────────────────────────────────────────────────────
-    movies = {}
-    for pos, row in df.iterrows():
-        t = row.get('title')
-        if not t or pd.isna(t):
-            continue
-        movies[t] = {
-            'y':  int(row['release_year'])          if pd.notna(row.get('release_year')) else None,
-            'r':  round(float(row['vote_average']),1) if pd.notna(row.get('vote_average')) else None,
-            'rt': int(row['runtime'])               if pd.notna(row.get('runtime'))      else None,
-            'g':  row.get('genres_list', [])[:4],
-            'o':  str(row.get('overview', ''))[:200],
-            'b':  _fmt(row.get('budget')),
-            'v':  _fmt(row.get('revenue')),
-        }
-
-    # ── Pre-compute top-12 recommendations per movie (numpy argsort, fast) ─────
-    recs = {}
-    for pos in range(len(df)):
-        t = titles_arr[pos]
-        if not t or pd.isna(t):
-            continue
-        scores   = sim[pos]
-        top_idx  = np.argsort(scores)[::-1][1:13]   # top-12, skip self
-        recs[t]  = [
-            {'t': titles_arr[i], 's': int(round(float(scores[i]) * 100))}
-            for i in top_idx
-            if i < len(titles_arr) and titles_arr[i] in movies
-        ]
-
-    # ── Top picks (weighted rating) ────────────────────────────────────────────
-    top_df    = _rec.top_movies(n=12)
-    top_picks = [t for t in top_df['title'].tolist() if t in movies]
-
-    return movies, recs, top_picks
-
-
-with st.spinner("Pre-computing recommendations…"):
-    movies_data, recs_data, top_picks = build_client_data(rec)
+    movies_data, recs_data, top_picks = load_precomputed()
 
 # Serialise — escape </script> so it cannot break the HTML embedding
 def safe_json(obj):
